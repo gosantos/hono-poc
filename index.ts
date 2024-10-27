@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { LambdaContext, LambdaEvent } from "hono/aws-lambda";
 import { z } from "zod";
-import { CUSTOMERS_TABLE_NAME, dynamoDBDocumentClient } from "./ddb";
+import { client, Table } from "./ddb";
 import { PutCommand, GetCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
 type Bindings = {
@@ -146,9 +146,9 @@ app.post("/customers", async (c) => {
     );
   }
 
-  await dynamoDBDocumentClient.send(
+  await client.send(
     new PutCommand({
-      TableName: CUSTOMERS_TABLE_NAME,
+      TableName: Table.Customer,
       Item: {
         id: crypto.randomUUID(),
         ...p.data,
@@ -178,10 +178,9 @@ app.get("/customers/:id", async (c) => {
     );
   }
 
-
-  const res = await dynamoDBDocumentClient.send(
+  const res = await client.send(
     new GetCommand({
-      TableName: CUSTOMERS_TABLE_NAME,
+      TableName: Table.Customer,
       Key: {
         id: params.data.id,
       },
@@ -196,9 +195,9 @@ app.get("/customers/:id", async (c) => {
 });
 
 app.get("/customers", async (c) => {
-  const res = await dynamoDBDocumentClient.send(
+  const res = await client.send(
     new ScanCommand({
-      TableName: CUSTOMERS_TABLE_NAME,
+      TableName: Table.Customer,
     })
   );
 

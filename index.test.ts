@@ -1,6 +1,5 @@
 import { expect, test, describe, beforeAll, afterAll } from "bun:test";
 import app from ".";
-import { CUSTOMERS_TABLE_NAME, dynamoDBDocumentClient } from "./ddb";
 import {
   CreateTableCommand,
   DeleteTableCommand,
@@ -8,6 +7,7 @@ import {
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/native";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { client, Table } from "./ddb";
 
 let server: ReturnType<typeof setupServer>;
 beforeAll(async () => {
@@ -26,9 +26,9 @@ beforeAll(async () => {
   server.listen();
 
   // setup dynamodb table
-  await dynamoDBDocumentClient.send(
+  await client.send(
     new CreateTableCommand({
-      TableName: CUSTOMERS_TABLE_NAME,
+      TableName: Table.Customer,
       KeySchema: [
         {
           AttributeName: "id",
@@ -53,9 +53,9 @@ afterAll(async () => {
   server.close();
 
   // cleanup dynamodb table
-  await dynamoDBDocumentClient.send(
+  await client.send(
     new DeleteTableCommand({
-      TableName: CUSTOMERS_TABLE_NAME,
+      TableName: Table.Customer,
     })
   );
 });
@@ -194,9 +194,9 @@ describe.skip("POST /customers", () => {
 describe("GET /customers", () => {
   test("should customer by id", async () => {
     const uuid = crypto.randomUUID();
-    await dynamoDBDocumentClient.send(
+    await client.send(
       new PutCommand({
-        TableName: CUSTOMERS_TABLE_NAME,
+        TableName: Table.Customer,
         Item: {
           id: uuid,
           firstName: "John",
